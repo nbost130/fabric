@@ -48,6 +48,10 @@ users_path = os.path.join(current_dir, "users.json")
 with open(users_path, 'r') as f:
     users = json.load(f)
 
+print(f"Valid tokens: {valid_tokens}")
+print(f"Users: {users}")
+print(f"JWT_SECRET: {os.getenv('JWT_SECRET')}")
+
 # The function to check if the token is valid
 def auth_required(f):
     """    Decorator function to check if the token is valid.
@@ -75,19 +79,24 @@ def auth_required(f):
             TypeError: If 'Authorization' header value is not a string.
             ValueError: If the authentication token is invalid or expired.
         """
-
+        print(f"Received request headers: {request.headers}")
         # Get the authentication token from request header
         auth_token = request.headers.get("Authorization", "")
-
+        print(f"Extracted auth_token: {auth_token}")
         # Remove any bearer token prefix if present
         if auth_token.lower().startswith("bearer "):
             auth_token = auth_token[7:]
 
+        print(f"Received Authorization header: {request.headers.get('Authorization')}")
+        print(f"Processed auth_token: {auth_token}")
+
         # Get API endpoint from request
         endpoint = request.path
-
+        print(f"Requested endpoint: {endpoint}")
+        
         # Check if token is valid
         user = check_auth_token(auth_token, endpoint)
+        print(f"Result of check_auth_token: {user}")
         if user == "Unauthorized: You are not authorized for this API":
             return jsonify({"error": user}), 401
 
@@ -98,22 +107,31 @@ def auth_required(f):
 
 # Check for a valid token/user for the given route
 def check_auth_token(token, route):
-    """    Check if the provided token is valid for the given route and return the corresponding user.
+    """Check if the provided token is valid for the given route and return the corresponding user.
 
     Args:
         token (str): The token to be checked for validity.
         route (str): The route for which the token validity is to be checked.
 
     Returns:
-        str: The user corresponding to the provided token and route if valid, otherwise returns "Unauthorized: You are not authorized for this API".
+        dict or str: The user corresponding to the provided token and route if valid, otherwise returns "Unauthorized: You are not authorized for this API".
     """
-
+    print(f"Checking token: {token} for route: {route}")
+    print(f"Valid tokens for route: {valid_tokens.get(route, {})}")
+    
     # Check if token is valid for the given route and return corresponding user
     if route in valid_tokens and token in valid_tokens[route]:
-        return users[valid_tokens[route][token]]
+        user_id = valid_tokens[route][token]
+        user = users.get(user_id)
+        if user:
+            print(f"Authorized user: {user}")
+            return user
+        else:
+            print("Authorization failed: User not found")
+            return "Unauthorized: You are not authorized for this API"
     else:
+        print("Authorization failed")
         return "Unauthorized: You are not authorized for this API"
-
 
 # Define the allowlist of characters
 ALLOWLIST_PATTERN = re.compile(r"^[a-zA-Z0-9\s.,;:!?\-]+$")
