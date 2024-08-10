@@ -9,6 +9,7 @@ import os
 from dotenv import load_dotenv
 from importlib import resources
 
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -36,14 +37,16 @@ def server_error(e):
 ## Did I mention this is HTTP only? Don't run this on the public internet.
 
 # Read API tokens from the apikeys.json file
-api_keys = resources.read_text("installer.server.api", "fabric_api_keys.json")
-valid_tokens = json.loads(api_keys)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+api_keys_path = os.path.join(current_dir, "fabric_api_keys.json")
+with open(api_keys_path, 'r') as f:
+    valid_tokens = json.load(f)
 
 
 # Read users from the users.json file
-users = resources.read_text("installer.server.api", "users.json")
-users = json.loads(users)
-
+users_path = os.path.join(current_dir, "users.json")
+with open(users_path, 'r') as f:
+    users = json.load(f)
 
 # The function to check if the token is valid
 def auth_required(f):
