@@ -273,7 +273,7 @@ def login():
 
 def main():
     """Runs the main fabric API backend server"""
-    app.run(host="127.0.0.1", port=13337, debug=True)
+    app.run(host="0.0.0.0", port=13337, debug=True)
 
 
 if __name__ == "__main__":
