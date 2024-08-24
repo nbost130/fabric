@@ -21,7 +21,14 @@ def not_found(e):
 def server_error(e):
     return jsonify({"error": "An internal server error occurred."}), 500
 
-
+# Added to allow for ping 
+@app.route('/ping', methods=['GET'])
+def ping():
+    try: 
+        return jsonify({'message': 'Success!'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 ##################################################
 ##################################################
 #
