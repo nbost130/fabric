@@ -1,0 +1,40 @@
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
+
+# Install git and pipx
+RUN apt-get update && apt-get install -y git && \
+    python -m pip install --user pipx && \
+    python -m pipx ensurepath
+
+# Add pipx to PATH
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Clone the repository and update it
+RUN git clone https://github.com/danielmiessler/fabric.git . && \
+    git pull origin main
+
+# Install fabric using pipx
+RUN pipx install .
+
+# Expose the correct port that the application will run on
+EXPOSE 5001
+
+# Set environment variables (customize as needed)
+ENV OPENAI_BASE_URL=https://api.openai.com/v1
+ENV DEFAULT_MODEL=gpt-3.5-turbo
+# ENV OPENAI_API_KEY=your_api_key_here
+
+# Create a startup script
+RUN echo '#!/bin/bash\n\
+if [ ! -f /app/.setup_complete ]; then\n\
+    fabric --setup\n\
+    touch /app/.setup_complete\n\
+fi\n\
+python /root/.local/pipx/venvs/fabric/bin/fabric_api_server\n'\
+> /app/start.sh && chmod +x /app/start.sh
+
+# Set the startup script as the entry point
+ENTRYPOINT ["/app/start.sh"]
